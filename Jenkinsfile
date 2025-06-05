@@ -1,13 +1,13 @@
 pipeline {
-  agent any
-  stages {
-    stage('Build') {
-      steps {
-        sh 'chmod a+x run_build_script.sh'
-        sh './run_build_script.sh'
-      }
-    }
-    stage('Test') {
+ agent any
+ stages {
+   stage('Build') {
+     steps {
+       sh 'chmod a+x run_build_script.sh'
+       sh './run_build_script.sh'
+     }
+   }
+   stage('Test') {
      parallel {
        stage('Test On Windows') {
          steps {
@@ -21,5 +21,37 @@ pipeline {
        }
      }
    }
-  } // Correct closing for 'stages' - now encompassing both 'Build' and 'Test'
-} // Correct closing for 'pipeline'
+   stage('Confirm Deploy to staging') {
+     steps {
+       timeout(time: 60, unit: 'SECONDS') {
+         input(message: 'Okay to Deploy?', ok: 'Let\'s Do it!')
+       }
+     }
+   }
+   stage('Deploy to Staging') {
+     steps {
+       echo "Deploying to staging..."
+     }
+   }
+   stage('Confirm Deploy to production') {
+     steps {
+       timeout(time: 60, unit: 'SECONDS') {
+         input(message: 'Okay to Deploy?', ok: 'Let\'s Do it!')
+       }
+     }
+   }
+   stage('Deploy to Production') {
+     steps {
+       echo "Deploying to production..."
+     }
+   }
+ }
+ post {
+   success {
+     echo "build succeeded"
+   }
+   failure {
+     echo "Build failed"
+   }
+ }
+}
